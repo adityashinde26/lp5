@@ -1,6 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <omp.h>
+#include <cstdlib>
+#include <ctime>
+#include <iomanip>
 
 using namespace std;
 
@@ -71,9 +74,9 @@ int parallelMax(vector<int>& arr)
 }
 
 // Serial Sum
-int serialSum(vector<int>& arr)
+long long serialSum(vector<int>& arr)
 {
-    int sum = 0;
+    long long sum = 0;
 
     for (int i = 0; i < arr.size(); i++)
     {
@@ -84,9 +87,9 @@ int serialSum(vector<int>& arr)
 }
 
 // Parallel Sum
-int parallelSum(vector<int>& arr)
+long long parallelSum(vector<int>& arr)
 {
-    int sum = 0;
+    long long sum = 0;
 
     #pragma omp parallel for reduction(+:sum)
     for (int i = 0; i < arr.size(); i++)
@@ -100,7 +103,7 @@ int parallelSum(vector<int>& arr)
 // Serial Average
 double serialAverage(vector<int>& arr)
 {
-    int sum = serialSum(arr);
+    long long sum = serialSum(arr);
 
     return (double)sum / arr.size();
 }
@@ -108,75 +111,100 @@ double serialAverage(vector<int>& arr)
 // Parallel Average
 double parallelAverage(vector<int>& arr)
 {
-    int sum = parallelSum(arr);
+    long long sum = parallelSum(arr);
 
     return (double)sum / arr.size();
 }
 
 int main()
 {
-    vector<int> arr = {10, 20, 5, 40, 15, 35, 50, 25};
+    int n;
 
-    // Serial Performance
+    cout << "Enter number of elements: ";
+    cin >> n;
+
+    vector<int> arr(n);
+
+    srand(time(0));
+
+    // Random numbers generate
+    for (int i = 0; i < n; i++)
+    {
+        arr[i] = rand() % 10000;
+    }
+
+    // Print first 20 elements only
+    cout << "\nFirst 20 Array Elements:\n";
+
+    for (int i = 0; i < min(20, n); i++)
+    {
+        cout << arr[i] << " ";
+    }
+
+    // ---------------- SERIAL ----------------
+
     double start1 = omp_get_wtime();
 
     int sMin = serialMin(arr);
     int sMax = serialMax(arr);
-    int sSum = serialSum(arr);
+    long long sSum = serialSum(arr);
     double sAvg = serialAverage(arr);
 
     double end1 = omp_get_wtime();
 
     double sequentialTime = end1 - start1;
 
-    // Parallel Performance
+    // ---------------- PARALLEL ----------------
+
     double start2 = omp_get_wtime();
 
     int pMin = parallelMin(arr);
     int pMax = parallelMax(arr);
-    int pSum = parallelSum(arr);
+    long long pSum = parallelSum(arr);
     double pAvg = parallelAverage(arr);
 
     double end2 = omp_get_wtime();
 
     double parallelTime = end2 - start2;
 
-    // Output
-    cout << "Array Elements: ";
+    // ---------------- OUTPUT ----------------
 
-    for (int x : arr)
-    {
-        cout << x << " ";
-    }
-
-    // Serial Results
-    cout << "\n\n----- Serial Results -----";
+    cout << "\n\n===== SERIAL RESULTS =====";
 
     cout << "\nMinimum = " << sMin;
     cout << "\nMaximum = " << sMax;
     cout << "\nSum = " << sSum;
-    cout << "\nAverage = " << sAvg;
+    cout << "\nAverage = " << fixed << setprecision(2) << sAvg;
 
-    // Parallel Results
-    cout << "\n\n----- Parallel Results -----";
+    cout << "\nSequential Time = "
+         << sequentialTime * 1000
+         << " ms";
+
+    cout << "\n\n===== PARALLEL RESULTS =====";
 
     cout << "\nMinimum = " << pMin;
     cout << "\nMaximum = " << pMax;
     cout << "\nSum = " << pSum;
-    cout << "\nAverage = " << pAvg;
-
-    // Performance
-    cout << "\n\nSequential Time = "
-         << sequentialTime << " seconds";
+    cout << "\nAverage = " << fixed << setprecision(2) << pAvg;
 
     cout << "\nParallel Time = "
-         << parallelTime << " seconds";
+         << parallelTime * 1000
+         << " ms";
 
     // Speedup
-    cout << "\nSpeedup = "
-         << sequentialTime / parallelTime;
+    cout << "\n\nSpeedup = ";
+
+    if (parallelTime > 0)
+    {
+        cout << sequentialTime / parallelTime;
+    }
+    else
+    {
+        cout << "Infinity";
+    }
+
+    cout << endl;
 
     return 0;
 }
-//g++ filename.cpp -fopenmp -o filename
-// ./filename
+
